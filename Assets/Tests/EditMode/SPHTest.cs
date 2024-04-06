@@ -13,9 +13,9 @@ public class SPHTest
     }
 
     [Test, Performance]
-    public void FindNeigborsPerformance()
+    public void StepPerformance()
     {
-        Measure.Method(() => { SPH.FindNeigbors(); })
+        Measure.Method(() => { SPH.Step(); })
             .WarmupCount(5)
             .MeasurementCount(4)
             .IterationsPerMeasurement(4)
