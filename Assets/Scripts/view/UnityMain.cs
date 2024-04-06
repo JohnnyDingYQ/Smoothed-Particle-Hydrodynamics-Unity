@@ -9,16 +9,23 @@ public class UnityMain : MonoBehaviour
     }
     void Start()
     {
+        InvokeRepeating("Draw", 0f, 0.2f);
+    }
+
+    void Draw()
+    {
         foreach (Particle p in Grid.Particles)
         {
             Color c = Color.blue;
             if (p.Type == Type.Solid)
                 c = Color.yellow;
-            DebugExtension.DebugPoint(p.Position, c, 4, 1000);
+            if (p.IsTagged)
+                c = Color.green;
+            DebugExtension.DebugPoint(p.Position, c, 20, 0.2f);
         }
     }
-    void FixedUpdate()
+    void Update()
     {
-        // SPH.FindNeigbors();
+        SPH.Step();
     }
 }

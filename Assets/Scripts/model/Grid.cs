@@ -12,16 +12,16 @@ public static class Grid
 
     static Grid()
     {
-        CellSize = Constants.CellSize;
-        Dimension = Constants.Dimension;
-        WallThickness = Constants.WallThickness;
+        CellSize = Parameters.CellSize;
+        Dimension = Parameters.Dimension;
+        WallThickness = Parameters.WallThickness;
     }
 
     public static void InitParticles()
     {
         array2D = new HashSet<Particle>[Dimension, Dimension];
         Particles = new Particle[Dimension * Dimension];
-        float3 offset = new(20.0f, 0f, 20.0f);
+        float3 offset = Parameters.CellSize / 2 * new float3(1, 1, 0);
         int count = 0;
         for (int i = 0; i < Dimension; i++)
             for (int j = 0; j < Dimension; j++)
@@ -30,6 +30,11 @@ public static class Grid
                 Particle p = new(pos, IsWall(i, j) ? Type.Solid : Type.Fluid, i, j);
                 array2D[i, j] = new() { p };
                 Particles[count++] = p;
+
+                if (i == 15 && j == 5)
+                {
+                    p.IsTagged = true;
+                }
             }
 
 

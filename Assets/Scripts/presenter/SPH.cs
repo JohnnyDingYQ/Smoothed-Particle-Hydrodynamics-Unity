@@ -9,6 +9,8 @@ public static class SPH
         FindNeigbors();
         ComputePressure();
         ComputeForces();
+        ApplyMotion();
+        UpdateGrid();
     }
 
     public static void FindNeigbors()
@@ -23,11 +25,14 @@ public static class SPH
             for (int i = x - 1; i <= x + 1; i++)
                 for (int j = y - 1; j <= y + 1; j++)
                 {
-                    if (i == x && j == y)
-                        continue;
                     if (IsValidCoord(i, j))
                         foreach (Particle particle in Grid.GetCell(i, j))
+                        {
+                            if (particle == p)
+                                continue;
                             p.Neighbors.Add(particle);
+                        }
+
                 }
         }
     }
@@ -48,13 +53,13 @@ public static class SPH
                 sum += j.Mass / j.Density * math.dot(i.Velocity - j.Velocity, KernelGradient(i.Position, j.Position));
             }
             float deltaDensity = i.Density * sum;
-            i.Density = deltaDensity * 0.02f;
+            i.Density += deltaDensity * Parameters.TimeStep;
         }
 
 
         static void ComputePressure(Particle i)
         {
-            i.Pressure = Constants.Stiffness * (MathF.Pow(i.Density / Constants.DesiredRestDensity, 7) - 1);
+            i.Pressure = Parameters.Stiffness * (MathF.Pow(i.Density / Parameters.DesiredRestDensity, 7) - 1);
         }
     }
 
@@ -62,8 +67,15 @@ public static class SPH
     {
         foreach (Particle i in Grid.Particles)
         {
-            float3 preasure = Pressure(i);
+            float3 pressure = Pressure(i);
             float3 viscosity = Viscosity(i);
+            float3 gravity = i.Mass * Parameters.Gravity * new float3(0, -1, 0);
+            i.Force = pressure + viscosity + gravity;
+
+            if (i.IsTagged)
+                Debug.Log("Pressure: " + pressure.y / Parameters.Mass +
+                " viscosity: " + viscosity.y / Parameters.Mass +
+                " Gravity: " + gravity.y / Parameters.Mass);
         }
 
         float3 Pressure(Particle i)
@@ -71,10 +83,13 @@ public static class SPH
             float3 sum = 0;
             foreach (Particle j in i.Neighbors)
             {
-                sum += j.Mass * (1 / i.Density + 1 / j.Density) * KernelGradient(i.Position, j.Position);
+                sum += j.Mass * (i.Pressure / MathF.Pow(i.Density, 2) + j.Pressure / MathF.Pow(j.Density, 2))
+                    * KernelGradient(i.Position, j.Position);
+                // if (i.IsTagged)
+                //     Debug.Log(KernelGradient(i.Position, j.Position));
             }
-            float3 densityGradient = i.Density * sum;
-            return -i.Mass / i.Density * densityGradient;
+            float3 pressureGradient = i.Density * sum;
+            return -i.Mass / i.Density * pressureGradient;
         }
 
         float3 Viscosity(Particle i)
@@ -84,29 +99,57 @@ public static class SPH
             {
                 float3 xij = i.Position - j.Position;
                 sum += j.Mass / j.Density * (i.Velocity - j.Velocity) * xij * KernelGradient(i.Position, j.Position)
-                    / (math.dot(xij, xij) + 0.01f * MathF.Pow(Constants.SmoothingLength, 2));
+                    / (math.dot(xij, xij) + 0.01f * MathF.Pow(Parameters.SmoothingLength, 2));
             }
-            float3 doubleGradientVelocity = 2*sum;
-            return i.Mass * Constants.KinematicViscosity * doubleGradientVelocity;
+            float3 doubleGradientVelocity = 2 * sum;
+            return i.Mass * Parameters.KinematicViscosity * doubleGradientVelocity;
+        }
+    }
+
+    static void ApplyMotion()
+    {
+        foreach (Particle i in Grid.Particles)
+        {
+            if (i.Type == Type.Solid)
+                continue;
+            i.Velocity += Parameters.TimeStep * i.Force / i.Mass;
+            i.Position += Parameters.TimeStep * i.Velocity;
+        }
+    }
+
+    static void UpdateGrid()
+    {
+        foreach (Particle i in Grid.Particles)
+        {
+            if (i.Type == Type.Solid)
+                continue;
+            int newX = (int)(i.Position.x / Parameters.CellSize);
+            int newY = (int)(i.Position.y / Parameters.CellSize);
+            if (i.X == newX && i.Y == newY)
+                continue;
+            Grid.GetCell(i.X, i.Y).Remove(i);
+            Grid.GetCell(newX, newY).Add(i);
+            i.X = newX;
+            i.Y = newY;
         }
     }
 
     static float Kernel(float3 i, float3 j)
     {
-        float q = MathF.Sqrt(MathF.Pow(i.x - j.x, 2) + MathF.Pow(i.y - j.y, 2)) / Constants.SmoothingLength;
-        float fq = (float)3 / 2 * MathF.PI;
+        float q = MathF.Sqrt(MathF.Pow(i.x - j.x, 2) + MathF.Pow(i.y - j.y, 2)) / Parameters.SmoothingLength;
+        float fq = (float)3 / 2 / MathF.PI;
         if (q >= 2)
             fq = 0;
         else if (q < 2 && q >= 1)
             fq *= MathF.Pow(2 - q, 3) / 6;
         else if (q < 1)
             fq *= (float)2 / 3 - MathF.Pow(q, 2) + 0.5f * MathF.Pow(q, 3);
-        return fq / MathF.Pow(Constants.SmoothingLength, 2);
+        return fq / MathF.Pow(Parameters.SmoothingLength, 2);
     }
 
     static float3 KernelGradient(float3 i, float3 j)
     {
-        float h = 0.001f;
+        float h = 0.1f;
         float h2 = h * 2;
         float3 gradient = new(0, 0, 0);
         float3 offset = new(1, 0, 0);

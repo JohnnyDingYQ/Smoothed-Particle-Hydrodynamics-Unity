@@ -8,10 +8,12 @@ public class Particle
     public float Mass { get; set; }
     public float3 Position { get; set; }
     public float3 Velocity { get; set; }
+    public float3 Force { get; set; }
     public Type Type { get; set; }
-    public List<Particle> Neighbors {get; set; }
+    public List<Particle> Neighbors { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
+    public bool IsTagged { get; set; }
 
     public Particle(float3 pos, Type type, int x, int y)
     {
@@ -19,7 +21,12 @@ public class Particle
         Type = type;
         X = x;
         Y = y;
+        Velocity = 0;
+        Pressure = 0;
+        Density = Parameters.DesiredRestDensity;
+        Mass = Parameters.Mass;
         Neighbors = new();
+        IsTagged = false;
     }
 }
 
