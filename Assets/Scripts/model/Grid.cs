@@ -27,8 +27,7 @@ public static class Grid
             for (int j = 0; j < Dimension; j++)
             {
                 float3 pos = new float3(i, j, 0) * CellSize + offset;
-                Int3 coord = new(i, j, 0);
-                Particle p = new(pos, IsWall(i, j) ? Type.Solid : Type.Fluid, coord);
+                Particle p = new(pos, IsWall(i, j) ? Type.Solid : Type.Fluid, i, j);
                 array2D[i, j] = new() { p };
                 Particles[count++] = p;
             }
@@ -40,15 +39,6 @@ public static class Grid
             int _w = Dimension - WallThickness;
             return x < w || x >= _w || y < w;
         }
-    }
-
-    public static Int3 GetCoordFromIndex(int count)
-    {
-        int x, y, z;
-        y = count / (Dimension * Dimension);
-        z = count % (Dimension * Dimension) / Dimension;
-        x = count % (Dimension * Dimension) % Dimension;
-        return new Int3(x, y, z);
     }
 
     public static HashSet<Particle> GetCell(int x, int y)

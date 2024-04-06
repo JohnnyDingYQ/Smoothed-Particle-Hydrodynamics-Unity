@@ -23,26 +23,22 @@ public class SPHTest
             .Run();
     }
 
+    [Test]
+    public void BasicFindNeighbor()
+    {
+        SPH.FindNeigbors();
+        Particle p = Grid.GetCell(1, 1).First();
+        List<Particle> expected = new();
+        for (int i = 0; i <= 2; i++)
+            for (int j = 0; j <= 2; j++)
+            {
+                if (i == 1 && j == 1)
+                    continue;
+                expected.Add(Grid.GetCell(i, j).First());
+            }
+        Assert.True(new HashSet<Particle>(expected).SetEquals(new HashSet<Particle>(p.Neighbors)));
 
-
-    // [Test]
-    // public void BasicFindNeighbor()
-    // {
-    //     SPH.FindNeigbors();
-    //     Int3 c = new(1, 1, 1);
-    //     Particle p = Grid.GetCell(c).First();
-    //     HashSet<Particle> expected = new();
-    //     for (int i = -1; i <= 1; i++)
-    //         for (int j = -1; j <= 1; j++)
-    //             for (int k = -1; k <= 1; k++)
-    //             {
-    //                 if (i == 0 && j == 0 && k == 0)
-    //                     continue;
-    //                 expected.Add(Grid.GetCell(c + new Int3(i, j, k)).First());
-    //             }
-    //     Assert.True(p.Neighbors.SetEquals(expected));
-
-    //     p = Grid.GetCell(new Int3(0, 0, 0)).First();
-    //     Assert.AreEqual(7, p.Neighbors.Count);
-    // }
+        p = Grid.GetCell(0, 0).First();
+        Assert.AreEqual(3, p.Neighbors.Count);
+    }
 }
