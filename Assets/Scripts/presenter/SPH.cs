@@ -52,18 +52,18 @@ public static class SPH
         void ComputeDensity(Particle i)
         {
             float sum = 0;
+            float test = 0;
             foreach (Particle j in i.Neighbors)
             {
+                test += math.length(i.Velocity - j.Velocity);
                 sum += j.Mass / j.Density * math.dot(i.Velocity - j.Velocity, KernelGradient(i.Position, j.Position));
             }
+            if (i.IsTagged)
+                Debug.Log(test);
             float deltaDensity = i.Density * sum;
             i.Density += deltaDensity * Parameters.TimeStep;
-            if (i.IsTagged)
-                Debug.Log(i.Density);
-            // if (MathF.Ceiling(sum) == -10337)
-            // {
-            //     Debug.Log("hi");
-            // }
+            // if (i.IsTagged)
+            //     Debug.Log(i.Density);
         }
 
 
@@ -165,8 +165,8 @@ public static class SPH
         else if (q < 2 && q >= 1)
             fq *= MathF.Pow(2 - q, 3) / 6;
         else if (q < 1)
-            fq *= (float)2 / 3 - MathF.Pow(q, 2) + 0.5f * MathF.Pow(q, 3);
-        return fq / MathF.Pow(Parameters.SmoothingLength, 2);
+            fq *= (float)2 / 3 - MathF.Pow(q, 2) + 0.5f * MathF.Pow(q, 2);
+        return fq / MathF.Pow(Parameters.SmoothingLength, 3);
     }
 
     static float3 KernelGradient(float3 i, float3 j)
