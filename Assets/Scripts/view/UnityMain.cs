@@ -9,7 +9,7 @@ public class UnityMain : MonoBehaviour
     }
     void Start()
     {
-        InvokeRepeating("Draw", 0f, 0.2f);
+        InvokeRepeating("Draw", 0f, 0.1f);
     }
 
     void Draw()
@@ -21,7 +21,7 @@ public class UnityMain : MonoBehaviour
                 c = Color.yellow;
             if (p.IsTagged)
                 c = Color.green;
-            DebugExtension.DebugPoint(p.Position, c, 20, 0.2f);
+            DebugExtension.DebugPoint(p.Position, c, 20, 0.1f);
         }
     }
     void Update()

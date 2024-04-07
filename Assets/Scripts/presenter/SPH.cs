@@ -4,6 +4,7 @@ using UnityEngine;
 
 public static class SPH
 {
+    static int iteration = 0;
     public static void Step()
     {
         FindNeigbors();
@@ -11,6 +12,7 @@ public static class SPH
         ComputeForces();
         ApplyMotion();
         UpdateGrid();
+        iteration ++;
     }
 
     public static void FindNeigbors()
@@ -41,6 +43,8 @@ public static class SPH
     {
         foreach (Particle i in Grid.Particles)
         {
+            if (i.Type == Type.Solid)
+                continue;
             ComputeDensity(i);
             ComputePressure(i);
         }
@@ -54,6 +58,12 @@ public static class SPH
             }
             float deltaDensity = i.Density * sum;
             i.Density += deltaDensity * Parameters.TimeStep;
+            if (i.IsTagged)
+                Debug.Log(i.Density);
+            // if (MathF.Ceiling(sum) == -10337)
+            // {
+            //     Debug.Log("hi");
+            // }
         }
 
 
@@ -72,22 +82,29 @@ public static class SPH
             float3 gravity = i.Mass * Parameters.Gravity * new float3(0, -1, 0);
             i.Force = pressure + viscosity + gravity;
 
-            if (i.IsTagged)
-                Debug.Log("Pressure: " + pressure.y / Parameters.Mass +
-                " viscosity: " + viscosity.y / Parameters.Mass +
-                " Gravity: " + gravity.y / Parameters.Mass);
+            // if (i.IsTagged)
+            //     Debug.Log("Pressure: " + math.length(pressure) / Parameters.Mass +
+            //     " viscosity: " + math.length(viscosity) / Parameters.Mass +
+            //     " gravity: " + math.length(gravity) / Parameters.Mass);
         }
 
         float3 Pressure(Particle i)
         {
             float3 sum = 0;
+            float test = 0;
             foreach (Particle j in i.Neighbors)
             {
+                // if (j.Pressure / MathF.Pow(j.Density, 2) > 100000000000 && i.IsTagged)
+                // {
+                //     Debug.Log(j.InitialX + " "  + j.InitialY);
+                // }
+                    
+                test += j.Pressure / MathF.Pow(j.Density, 2);
                 sum += j.Mass * (i.Pressure / MathF.Pow(i.Density, 2) + j.Pressure / MathF.Pow(j.Density, 2))
                     * KernelGradient(i.Position, j.Position);
-                // if (i.IsTagged)
-                //     Debug.Log(KernelGradient(i.Position, j.Position));
             }
+            // if (i.IsTagged)
+            //     Debug.Log(test);
             float3 pressureGradient = i.Density * sum;
             return -i.Mass / i.Density * pressureGradient;
         }
@@ -127,6 +144,11 @@ public static class SPH
             int newY = (int)(i.Position.y / Parameters.CellSize);
             if (i.X == newX && i.Y == newY)
                 continue;
+            // if (!IsValidCoord(newX, newY))
+            // {
+            //     Debug.Log(i.InitialX);
+            //     Debug.Log(i.InitialY);
+            // }
             Grid.GetCell(i.X, i.Y).Remove(i);
             Grid.GetCell(newX, newY).Add(i);
             i.X = newX;

@@ -31,10 +31,9 @@ public static class Grid
                 array2D[i, j] = new() { p };
                 Particles[count++] = p;
 
-                if (i == 15 && j == 5)
-                {
+                // if (i == 16 && j == 3)
+                if (i == 19 && j == 11)
                     p.IsTagged = true;
-                }
             }
 
 
