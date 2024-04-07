@@ -14,7 +14,6 @@ public static class Grid
     {
         CellSize = Parameters.CellSize;
         Dimension = Parameters.Dimension;
-        WallThickness = Parameters.WallThickness;
     }
 
     public static void InitParticles()
@@ -27,7 +26,7 @@ public static class Grid
             for (int j = 0; j < Dimension; j++)
             {
                 float3 pos = new float3(i, j, 0) * CellSize + offset;
-                Particle p = new(pos, IsWall(i, j) ? Type.Solid : Type.Fluid, i, j);
+                Particle p = new(pos, i, j);
                 array2D[i, j] = new() { p };
                 Particles[count++] = p;
 
@@ -35,14 +34,6 @@ public static class Grid
                 if (i == 19 && j == 11)
                     p.IsTagged = true;
             }
-
-
-        static bool IsWall(int x, int y)
-        {
-            int w = WallThickness;
-            int _w = Dimension - WallThickness;
-            return x < w || x >= _w || y < w;
-        }
     }
 
     public static HashSet<Particle> GetCell(int x, int y)

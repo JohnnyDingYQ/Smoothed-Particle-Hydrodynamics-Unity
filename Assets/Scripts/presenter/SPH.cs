@@ -43,8 +43,6 @@ public static class SPH
     {
         foreach (Particle i in Grid.Particles)
         {
-            if (i.Type == Type.Solid)
-                continue;
             ComputeDensity(i);
             ComputePressure(i);
         }
@@ -52,18 +50,12 @@ public static class SPH
         void ComputeDensity(Particle i)
         {
             float sum = 0;
-            float test = 0;
             foreach (Particle j in i.Neighbors)
             {
-                test += math.length(i.Velocity - j.Velocity);
-                sum += j.Mass / j.Density * math.dot(i.Velocity - j.Velocity, KernelGradient(i.Position, j.Position));
+                sum += j.Mass * Kernel(i.Position, j.Position);
             }
-            if (i.IsTagged)
-                Debug.Log(test);
-            float deltaDensity = i.Density * sum;
-            i.Density += deltaDensity * Parameters.TimeStep;
-            // if (i.IsTagged)
-            //     Debug.Log(i.Density);
+
+            i.Density = sum;
         }
 
 
@@ -127,10 +119,21 @@ public static class SPH
     {
         foreach (Particle i in Grid.Particles)
         {
-            if (i.Type == Type.Solid)
-                continue;
             i.Velocity += Parameters.TimeStep * i.Force / i.Mass;
-            i.Position += Parameters.TimeStep * i.Velocity;
+            float3 next = i.Position + Parameters.TimeStep * i.Velocity;
+            if (next.x < 0 || next.x >= Grid.Dimension * Grid.CellSize || next.y < 0 || next.y >= Grid.Dimension * Grid.CellSize)
+            {
+                i.Velocity *= -0.5f;
+                i.Position += i.Velocity * Parameters.TimeStep;
+            }
+            else
+                i.Position = next;
+            if (float.IsNaN(i.Position.x) || float.IsNaN(i.Position.y))
+            {
+                float d = Grid.CellSize * Grid.Dimension;
+                i.Position = new float3(d / 2, d * 2 / 3, 0);
+                i.Velocity = 0;
+            }
         }
     }
 
@@ -138,17 +141,10 @@ public static class SPH
     {
         foreach (Particle i in Grid.Particles)
         {
-            if (i.Type == Type.Solid)
-                continue;
             int newX = (int)(i.Position.x / Parameters.CellSize);
             int newY = (int)(i.Position.y / Parameters.CellSize);
             if (i.X == newX && i.Y == newY)
                 continue;
-            // if (!IsValidCoord(newX, newY))
-            // {
-            //     Debug.Log(i.InitialX);
-            //     Debug.Log(i.InitialY);
-            // }
             Grid.GetCell(i.X, i.Y).Remove(i);
             Grid.GetCell(newX, newY).Add(i);
             i.X = newX;
