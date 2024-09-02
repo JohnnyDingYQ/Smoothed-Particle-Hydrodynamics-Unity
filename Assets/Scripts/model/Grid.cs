@@ -31,8 +31,8 @@ public static class Grid
                 Particles[count++] = p;
 
                 // if (i == 16 && j == 3)
-                if (i == 19 && j == 11)
-                    p.IsTagged = true;
+                // if (i == 19 && j == 11)
+                //     p.IsTagged = true;
             }
     }
 

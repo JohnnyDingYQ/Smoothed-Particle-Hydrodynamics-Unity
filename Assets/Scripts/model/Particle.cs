@@ -12,22 +12,22 @@ public class Particle
     public List<Particle> Neighbors { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
-    public int InitialX { get; set; }
-    public int InitialY { get; set; }
-    public bool IsTagged { get; set; }
+    // public int InitialX { get; set; }
+    // public int InitialY { get; set; }
+    // public bool IsTagged { get; set; }
 
     public Particle(float3 pos, int x, int y)
     {
         Position = pos;
         X = x;
         Y = y;
-        InitialX = X;
-        InitialY = Y;
+        // InitialX = X;
+        // InitialY = Y;
         Velocity = 0;
         Pressure = 0;
         Density = Parameters.InitialDensity;
         Mass = Parameters.Mass;
         Neighbors = new();
-        IsTagged = false;
+        // IsTagged = false;
     }
 }
