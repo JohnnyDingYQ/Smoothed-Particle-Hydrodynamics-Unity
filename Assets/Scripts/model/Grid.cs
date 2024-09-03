@@ -6,7 +6,6 @@ public static class Grid
 {
     public static float CellSize { get; set; }
     public static int Dimension { get; set; }
-    public static int WallThickness { get; set; }
     private static HashSet<Particle>[,] array2D;
     public static Particle[] Particles { get; set; }
 

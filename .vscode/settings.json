@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Smoothed Particle Hydrodynamics Unity.sln"
+    "dotnet.defaultSolution": "Smoothed Particle Hydrodynamics Unity.sln",
+    "editor.tabSize": 4,
 }
