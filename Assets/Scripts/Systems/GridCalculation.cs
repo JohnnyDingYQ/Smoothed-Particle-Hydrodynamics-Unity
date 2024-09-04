@@ -32,8 +32,8 @@ public partial struct GridCalculation : ISystem
             var pos = transform.ValueRO.Position;
             ecb.SetSharedComponent(entity, new GridData()
             {
-                x = (int)(pos.x / config.SmoothingLength),
-                z = (int)(pos.z / config.SmoothingLength)
+                x = (int)(pos.x / config.CellSize),
+                z = (int)(pos.z / config.CellSize)
             });
         }
         ecb.Playback(state.EntityManager);

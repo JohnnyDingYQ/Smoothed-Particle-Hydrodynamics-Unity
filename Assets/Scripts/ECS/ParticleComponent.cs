@@ -3,9 +3,9 @@ using Unity.Entities;
 
 public struct ParticleComponent : IComponentData
 {
-    public float density;
-    public float pressure;
-    public float mass;
-    public float3 velocity;
-    public float3 force;
+    public float Density;
+    public float Pressure;
+    public float Mass;
+    public float3 Velocity;
+    public float3 Force;
 }

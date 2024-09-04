@@ -6,11 +6,10 @@ public class ConfigAuthoring : MonoBehaviour
     public GameObject ParticlePrefab;
     public int NumRows;
     public int NumCols;
-    public int ParticleSeparation;
-    public int ParticleScale;
+    public float ParticleSeparation;
+    public float ParticleScale;
     public float SmoothingLength;
     public float DesiredRestDensity;
-    public float InitialDensity;
     public float KinematicViscosity;
     public float Stiffness;
     public float Gravity;
@@ -31,7 +30,6 @@ public class ConfigAuthoring : MonoBehaviour
                 ParticleScale = authoring.ParticleScale,
                 SmoothingLength = authoring.SmoothingLength,
                 DesiredRestDensity = authoring.DesiredRestDensity,
-                InitialDensity = authoring.InitialDensity,
                 KinematicViscosity = authoring.KinematicViscosity,
                 Gravity = authoring.Gravity,
                 TimeStep = authoring.TimeStep,
@@ -47,11 +45,10 @@ public struct ConfigSingleton : IComponentData
     public Entity ParticlePrefab;
     public int NumRows;
     public int NumCols;
-    public int ParticleSeparation;
-    public int ParticleScale;
+    public float ParticleSeparation;
+    public float ParticleScale;
     public float SmoothingLength;
     public float DesiredRestDensity;
-    public float InitialDensity;
     public float KinematicViscosity;
     public float Gravity;
     public float TimeStep;

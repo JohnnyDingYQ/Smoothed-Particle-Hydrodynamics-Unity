@@ -1,4 +1,5 @@
 using System;
+using NUnit.Framework;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -24,8 +25,8 @@ public partial struct SPHSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
-        int maxX = (int)(config.NumRows * config.ParticleSeparation / config.SmoothingLength);
-        int maxZ = (int)(config.NumCols * config.ParticleSeparation / config.SmoothingLength);
+        int maxX = (int)(config.NumRows * config.ParticleSeparation / config.CellSize);
+        int maxZ = (int)(config.NumCols * config.ParticleSeparation / config.CellSize);
 
         for (int x = 0; x < maxX; x++)
             for (int z = 0; z < maxZ; z++)
@@ -36,22 +37,98 @@ public partial struct SPHSystem : ISystem
                 foreach (var particle in neighbors)
                 {
                     ParticleComponent particleComponent = state.EntityManager.GetComponentData<ParticleComponent>(particle);
-                    particleComponent.density = 0;
+                    particleComponent.Density = 0;
                     foreach (var other in neighbors)
                     {
                         if (particle.Equals(other))
                             continue;
-                        particleComponent.density += state.EntityManager.GetComponentData<ParticleComponent>(other).mass * Kernel(
+                        particleComponent.Density += state.EntityManager.GetComponentData<ParticleComponent>(other).Mass * Kernel(
                             state.EntityManager.GetComponentData<LocalTransform>(particle).Position,
                             state.EntityManager.GetComponentData<LocalTransform>(other).Position,
                             config.SmoothingLength
                         );
                     }
-                    particleComponent.pressure = config.Stiffness * (math.pow(particleComponent.density / config.DesiredRestDensity, 7) - 1);
+                    particleComponent.Pressure = config.Stiffness * (math.pow(particleComponent.Density / config.DesiredRestDensity, 7) - 1);
                     state.EntityManager.SetComponentData(particle, particleComponent);
 
                 }
                 neighbors.Dispose();
+            }
+
+
+        for (int x = 0; x < maxX; x++)
+            for (int z = 0; z < maxZ; z++)
+            {
+                query.ResetFilter();
+                query.AddSharedComponentFilter(new GridData() { x = x, z = z });
+                NativeArray<Entity> neighbors = query.ToEntityArray(Allocator.Temp);
+
+                foreach (var particle in neighbors)
+                {
+                    ParticleComponent i = state.EntityManager.GetComponentData<ParticleComponent>(particle);
+                    float3 sumPressure = 0;
+                    float3 sumVisocity = 0;
+                    foreach (var other in neighbors)
+                    {
+                        if (particle.Equals(other))
+                            continue;
+                        ParticleComponent j = state.EntityManager.GetComponentData<ParticleComponent>(particle);
+                        float3 iPos = state.EntityManager.GetComponentData<LocalTransform>(particle).Position;
+                        float3 jPos = state.EntityManager.GetComponentData<LocalTransform>(other).Position;
+
+                        // OutsideAssertIf.IsTrue(math.pow(i.Density, 2) != 0);
+                        // OutsideAssertIf.IsTrue(math.pow(j.Density, 2) != 0);
+                        // OutsideAssertIf.NotNaN(j.Mass * (i.Pressure / math.pow(i.Density, 2) + j.Pressure / math.pow(j.Density, 2))
+                        //     * KernelGradient(
+                        //         iPos,
+                        //         jPos,
+                        //         config.SmoothingLength
+                        //     ));
+
+                        sumPressure += j.Mass * (i.Pressure / math.pow(i.Density, 2) + j.Pressure / math.pow(j.Density, 2))
+                            * KernelGradient(iPos, jPos, config.SmoothingLength);
+
+                        float3 xij = iPos -jPos;
+                        sumVisocity += j.Mass / j.Density * (i.Velocity - j.Velocity) * xij
+                            * KernelGradient(iPos, jPos, config.SmoothingLength)
+                            / (math.dot(xij, xij) + 0.01f * math.pow(config.SmoothingLength, 2));
+                    }
+                    float3 forcePressure = -i.Mass * sumPressure;
+
+
+                    float3 doubleGradientVelocity = 2 * sumPressure;
+                    float3 forceVisocity = i.Mass * config.KinematicViscosity * doubleGradientVelocity;
+
+                    float3 forceGravity = i.Mass * 9.8f * new float3(0, 0, -1);
+
+                    i.Force = forcePressure + forceVisocity + forceGravity;
+                    // OutsideAssertIf.IsTrue(!float.IsNaN(forcePressure.x));
+                    // OutsideAssertIf.IsTrue(!float.IsNaN(forcePressure.z));
+
+                    state.EntityManager.SetComponentData(particle, i);
+                }
+            }
+
+        for (int x = 0; x < maxX; x++)
+            for (int z = 0; z < maxZ; z++)
+            {
+                query.ResetFilter();
+                query.AddSharedComponentFilter(new GridData() { x = x, z = z });
+                NativeArray<Entity> neighbors = query.ToEntityArray(Allocator.Temp);
+
+                foreach (var particle in neighbors)
+                {
+                    // float deltaTime = SystemAPI.Time.DeltaTime;
+                    float deltaTime = 0.01f;
+                    ParticleComponent i = state.EntityManager.GetComponentData<ParticleComponent>(particle);
+                    i.Velocity += deltaTime * i.Force / i.Mass;
+                    LocalTransform localTransform = state.EntityManager.GetComponentData<LocalTransform>(particle);
+                    localTransform.Position += deltaTime * i.Velocity;
+                    state.EntityManager.SetComponentData(particle, i);
+                    state.EntityManager.SetComponentData(particle, localTransform);
+
+                    OutsideAssertIf.NotNaN(localTransform.Position);
+                }
             }
     }
 
