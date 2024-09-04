@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-// [UpdateBefore(typeof(GridCalculation))]
+[UpdateBefore(typeof(GridCalculation))]
 public partial struct Setup : ISystem
 {
     [BurstCompile]
@@ -24,7 +24,7 @@ public partial struct Setup : ISystem
         CameraSingleton camera = SystemAPI.ManagedAPI.GetSingleton<CameraSingleton>();
 
         camera.camera.transform.SetPositionAndRotation(
-            new(config.ParticleSeparation * config.NumRows / 2, 70, config.ParticleSeparation * config.NumCols / 2),
+            new(config.ParticleSeparation * config.NumRows / 2, 200, config.ParticleSeparation * config.NumCols / 2),
             Quaternion.Euler(90, 0, 0)
         );
         var ecb = new EntityCommandBuffer(Allocator.Temp);
@@ -38,17 +38,19 @@ public partial struct Setup : ISystem
             ecb.SetComponent(particle, new LocalTransform()
             {
                 Position = config.ParticleSeparation * new float3(count % config.NumCols, 0, count / config.NumRows),
-                Scale = 1
+                Scale = config.ParticleScale
             });
-            ecb.SetComponent(particle, new ParticleComponent()
+            ecb.AddComponent(particle, new ParticleComponent()
             {
                 density = config.InitialDensity,
-                mass = MathF.Pow(config.SmoothingLength, 3) * config.DesiredRestDensity,
+                mass = math.pow(config.SmoothingLength, 3) * config.DesiredRestDensity,
 
             });
-            // ecb.SetSharedComponent(particle, new GridData());
+            ecb.AddSharedComponent(particle, new GridData());
             count++;
         }
+
+        particles.Dispose();
 
         ecb.Playback(state.EntityManager);
     }

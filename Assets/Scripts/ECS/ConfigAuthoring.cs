@@ -7,10 +7,12 @@ public class ConfigAuthoring : MonoBehaviour
     public int NumRows;
     public int NumCols;
     public int ParticleSeparation;
+    public int ParticleScale;
     public float SmoothingLength;
     public float DesiredRestDensity;
     public float InitialDensity;
     public float KinematicViscosity;
+    public float Stiffness;
     public float Gravity;
     public float TimeStep;
     public float CellSize;
@@ -26,6 +28,7 @@ public class ConfigAuthoring : MonoBehaviour
                 NumRows = authoring.NumRows,
                 NumCols = authoring.NumCols,
                 ParticleSeparation = authoring.ParticleSeparation,
+                ParticleScale = authoring.ParticleScale,
                 SmoothingLength = authoring.SmoothingLength,
                 DesiredRestDensity = authoring.DesiredRestDensity,
                 InitialDensity = authoring.InitialDensity,
@@ -33,6 +36,7 @@ public class ConfigAuthoring : MonoBehaviour
                 Gravity = authoring.Gravity,
                 TimeStep = authoring.TimeStep,
                 CellSize = authoring.CellSize,
+                Stiffness = authoring.Stiffness
             });
         }
     }
@@ -44,6 +48,7 @@ public struct ConfigSingleton : IComponentData
     public int NumRows;
     public int NumCols;
     public int ParticleSeparation;
+    public int ParticleScale;
     public float SmoothingLength;
     public float DesiredRestDensity;
     public float InitialDensity;
@@ -51,5 +56,5 @@ public struct ConfigSingleton : IComponentData
     public float Gravity;
     public float TimeStep;
     public float CellSize;
-
+    public float Stiffness;
 }
