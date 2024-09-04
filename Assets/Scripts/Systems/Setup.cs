@@ -24,7 +24,7 @@ public partial struct Setup : ISystem
         CameraSingleton camera = SystemAPI.ManagedAPI.GetSingleton<CameraSingleton>();
 
         camera.camera.transform.SetPositionAndRotation(
-            new(config.ParticleSeparation * config.NumRows / 2, 40, config.ParticleSeparation * config.NumCols / 2),
+            new(config.ParticleSeparation * config.NumRows / 2, 30, config.ParticleSeparation * config.NumCols / 2),
             Quaternion.Euler(90, 0, 0)
         );
         var ecb = new EntityCommandBuffer(Allocator.Temp);

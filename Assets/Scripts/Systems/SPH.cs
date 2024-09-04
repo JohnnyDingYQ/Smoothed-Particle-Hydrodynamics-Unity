@@ -25,8 +25,8 @@ public partial struct SPHSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
-        int maxX = (int)(config.NumRows * config.ParticleSeparation / config.CellSize);
-        int maxZ = (int)(config.NumCols * config.ParticleSeparation / config.CellSize);
+        int maxX = (int)(config.NumRows * config.ParticleSeparation / config.CellSize) + 1;
+        int maxZ = (int)(config.NumCols * config.ParticleSeparation / config.CellSize) + 1;
 
         for (int x = 0; x < maxX; x++)
             for (int z = 0; z < maxZ; z++)
@@ -123,7 +123,20 @@ public partial struct SPHSystem : ISystem
                     ParticleComponent i = state.EntityManager.GetComponentData<ParticleComponent>(particle);
                     i.Velocity += deltaTime * i.Force / i.Mass;
                     LocalTransform localTransform = state.EntityManager.GetComponentData<LocalTransform>(particle);
-                    localTransform.Position += deltaTime * i.Velocity;
+
+                    float3 nextPos = localTransform.Position + deltaTime * i.Velocity;
+                    float gridX = (int)(nextPos.x / config.CellSize);
+                    float gridZ = (int)(nextPos.z / config.CellSize);
+
+                    if (gridX < 0 || gridZ < 0 || gridX >= maxX || gridZ >= maxX)
+                    {
+
+                    }
+                    else
+                    {
+                        localTransform.Position = nextPos;
+                    }
+                    
                     state.EntityManager.SetComponentData(particle, i);
                     state.EntityManager.SetComponentData(particle, localTransform);
 
@@ -149,7 +162,7 @@ public partial struct SPHSystem : ISystem
             fq *= math.pow(2 - q, 3) / 6;
         else if (q < 1)
             fq *= (float)2 / 3 - math.pow(q, 2) + 0.5f * math.pow(q, 2);
-        return fq / math.pow(smoothingLength, 3);
+        return fq / math.pow(smoothingLength, 2);
     }
 
     [BurstCompile]
