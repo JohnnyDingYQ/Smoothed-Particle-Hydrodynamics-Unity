@@ -323,12 +323,12 @@ MonoBehaviour:
   ParticleSeparation: 0.2
   ParticleScale: 0.1
   SmoothingLength: 0.3
-  DesiredRestDensity: 5000
+  DesiredRestDensity: 1000
   KinematicViscosity: 0.02
-  Stiffness: 15000
-  Gravity: 500
+  Stiffness: 10000
+  Gravity: 100
   TimeStep: 0.05
-  CellSize: 0.25
+  CellSize: 0.6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

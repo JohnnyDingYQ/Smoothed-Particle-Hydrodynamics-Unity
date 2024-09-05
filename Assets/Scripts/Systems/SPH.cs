@@ -55,7 +55,7 @@ public partial struct SPHSystem : ISystem
                         );
                     }
 
-                    particleComponent.Pressure = config.Stiffness * (math.pow(particleComponent.Density / config.DesiredRestDensity, 7) - 1);
+                    particleComponent.Pressure = config.Stiffness * (math.pow(particleComponent.Density / config.DesiredRestDensity, 3) - 1);
 
                     state.EntityManager.SetComponentData(particle, particleComponent);
                 }
@@ -126,7 +126,7 @@ public partial struct SPHSystem : ISystem
                     LocalTransform localTransform = state.EntityManager.GetComponentData<LocalTransform>(particle);
 
                     float3 nextPos = localTransform.Position + deltaTime * i.Velocity;
-                    float dampingFactor = 0.5f;
+                    float dampingFactor = 0.9f;
 
                     if (nextPos.x < 0)
                     {
