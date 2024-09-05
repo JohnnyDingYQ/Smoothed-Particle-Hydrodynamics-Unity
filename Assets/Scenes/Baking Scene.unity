@@ -267,7 +267,7 @@ Transform:
   m_GameObject: {fileID: 642122718}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 50, y: 200, z: 50}
+  m_LocalPosition: {x: 2.5, y: 15, z: 2.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -318,17 +318,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ParticlePrefab: {fileID: 8571357984829972552, guid: 4936f2e89cadc064cbeef12cf1cb74eb, type: 3}
-  NumRows: 10
-  NumCols: 10
-  ParticleSeparation: 10
-  ParticleScale: 7
-  SmoothingLength: 10
-  DesiredRestDensity: 1.5
-  InitialDensity: 1
-  KinematicViscosity: 30
-  Gravity: 9.8
+  NumRows: 25
+  NumCols: 25
+  ParticleSeparation: 0.2
+  ParticleScale: 0.1
+  SmoothingLength: 0.3
+  DesiredRestDensity: 5000
+  KinematicViscosity: 0.02
+  Stiffness: 15000
+  Gravity: 500
   TimeStep: 0.05
-  CellSize: 0
+  CellSize: 0.25
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

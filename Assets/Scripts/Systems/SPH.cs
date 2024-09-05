@@ -131,23 +131,27 @@ public partial struct SPHSystem : ISystem
                     if (nextPos.x < 0)
                     {
                         nextPos.x = 0; 
-                        i.Velocity.x *= -dampingFactor; 
+                        i.Velocity.x *= -dampingFactor;
+                        nextPos = localTransform.Position + deltaTime * i.Velocity;
                     }
                     else if (nextPos.x >= config.NumRows * config.ParticleSeparation)
                     {
                         nextPos.x = config.NumRows * config.ParticleSeparation - float.Epsilon;
                         i.Velocity.x *= -dampingFactor;
+                        nextPos = localTransform.Position + deltaTime * i.Velocity;
                     }
 
                     if (nextPos.z < 0)
                     {
                         nextPos.z = 0; 
                         i.Velocity.z *= -dampingFactor;
+                        nextPos = localTransform.Position + deltaTime * i.Velocity;
                     }
                     else if (nextPos.z >= config.NumCols * config.ParticleSeparation)
                     {
                         nextPos.z = config.NumCols * config.ParticleSeparation - float.Epsilon;
                         i.Velocity.z *= -dampingFactor;
+                        nextPos = localTransform.Position + deltaTime * i.Velocity;
                     }
 
                     localTransform.Position = nextPos;
