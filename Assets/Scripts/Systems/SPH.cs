@@ -29,32 +29,40 @@ public partial struct SPHSystem : ISystem
         int maxZ = (int)(config.NumCols * config.ParticleSeparation / config.CellSize) + 1;
 
         for (int x = 0; x < maxX; x++)
+        {
             for (int z = 0; z < maxZ; z++)
             {
                 query.ResetFilter();
                 query.AddSharedComponentFilter(new GridData() { x = x, z = z });
                 NativeArray<Entity> neighbors = query.ToEntityArray(Allocator.Temp);
+
                 foreach (var particle in neighbors)
                 {
                     ParticleComponent particleComponent = state.EntityManager.GetComponentData<ParticleComponent>(particle);
                     particleComponent.Density = 0;
+
+                    float3 particlePosition = state.EntityManager.GetComponentData<LocalTransform>(particle).Position;
+
                     foreach (var other in neighbors)
                     {
-                        if (particle.Equals(other))
-                            continue;
-                        particleComponent.Density += state.EntityManager.GetComponentData<ParticleComponent>(other).Mass * Kernel(
-                            state.EntityManager.GetComponentData<LocalTransform>(particle).Position,
-                            state.EntityManager.GetComponentData<LocalTransform>(other).Position,
+                        float3 otherPosition = state.EntityManager.GetComponentData<LocalTransform>(other).Position;
+                        ParticleComponent otherComponent = state.EntityManager.GetComponentData<ParticleComponent>(other);
+
+                        particleComponent.Density += otherComponent.Mass * Kernel(
+                            particlePosition,
+                            otherPosition,
                             config.SmoothingLength
                         );
                     }
-                    particleComponent.Pressure = config.Stiffness * (math.pow(particleComponent.Density / config.DesiredRestDensity, 7) - 1);
-                    state.EntityManager.SetComponentData(particle, particleComponent);
 
+                    particleComponent.Pressure = config.Stiffness * (math.pow(particleComponent.Density / config.DesiredRestDensity, 7) - 1);
+
+                    state.EntityManager.SetComponentData(particle, particleComponent);
                 }
+
                 neighbors.Dispose();
             }
-
+        }
 
         for (int x = 0; x < maxX; x++)
             for (int z = 0; z < maxZ; z++)
@@ -66,50 +74,44 @@ public partial struct SPHSystem : ISystem
                 foreach (var particle in neighbors)
                 {
                     ParticleComponent i = state.EntityManager.GetComponentData<ParticleComponent>(particle);
-                    float3 sumPressure = 0;
-                    float3 sumVisocity = 0;
+                    float3 sumPressure = float3.zero;
+                    float3 sumViscosity = float3.zero;
+
                     foreach (var other in neighbors)
                     {
                         if (particle.Equals(other))
                             continue;
-                        ParticleComponent j = state.EntityManager.GetComponentData<ParticleComponent>(particle);
+
+                        ParticleComponent j = state.EntityManager.GetComponentData<ParticleComponent>(other);
                         float3 iPos = state.EntityManager.GetComponentData<LocalTransform>(particle).Position;
                         float3 jPos = state.EntityManager.GetComponentData<LocalTransform>(other).Position;
 
-                        // OutsideAssertIf.IsTrue(math.pow(i.Density, 2) != 0);
-                        // OutsideAssertIf.IsTrue(math.pow(j.Density, 2) != 0);
-                        // OutsideAssertIf.NotNaN(j.Mass * (i.Pressure / math.pow(i.Density, 2) + j.Pressure / math.pow(j.Density, 2))
-                        //     * KernelGradient(
-                        //         iPos,
-                        //         jPos,
-                        //         config.SmoothingLength
-                        //     ));
-
                         sumPressure += j.Mass * (i.Pressure / math.pow(i.Density, 2) + j.Pressure / math.pow(j.Density, 2))
-                            * KernelGradient(iPos, jPos, config.SmoothingLength);
+                                       * KernelGradient(iPos, jPos, config.SmoothingLength);
 
-                        float3 xij = iPos -jPos;
-                        sumVisocity += j.Mass / j.Density * (i.Velocity - j.Velocity) * xij
-                            * KernelGradient(iPos, jPos, config.SmoothingLength)
-                            / (math.dot(xij, xij) + 0.01f * math.pow(config.SmoothingLength, 2));
+                        float3 velocityDifference = i.Velocity - j.Velocity;
+
+                        float3 xij = iPos - jPos;
+                        float distanceSquared = math.dot(xij, xij) + 0.01f * math.pow(config.SmoothingLength, 2);
+
+                        sumViscosity += j.Mass * (velocityDifference / j.Density)
+                                        * KernelGradient(iPos, jPos, config.SmoothingLength)
+                                        / distanceSquared;
                     }
+
                     float3 forcePressure = -i.Mass * sumPressure;
+                    float3 forceViscosity = i.Mass * config.KinematicViscosity * sumViscosity;
+                    float3 forceGravity = i.Mass * config.Gravity * new float3(0, 0, -1);
 
-
-                    float3 doubleGradientVelocity = 2 * sumPressure;
-                    float3 forceVisocity = i.Mass * config.KinematicViscosity * doubleGradientVelocity;
-
-                    float3 forceGravity = i.Mass * 9.8f * new float3(0, 0, -1);
-
-                    i.Force = forcePressure + forceVisocity + forceGravity;
-                    // OutsideAssertIf.IsTrue(!float.IsNaN(forcePressure.x));
-                    // OutsideAssertIf.IsTrue(!float.IsNaN(forcePressure.z));
-
+                    i.Force = forcePressure + forceViscosity + forceGravity;
                     state.EntityManager.SetComponentData(particle, i);
                 }
+
+                neighbors.Dispose();
             }
 
         for (int x = 0; x < maxX; x++)
+        {
             for (int z = 0; z < maxZ; z++)
             {
                 query.ResetFilter();
@@ -118,31 +120,46 @@ public partial struct SPHSystem : ISystem
 
                 foreach (var particle in neighbors)
                 {
-                    // float deltaTime = SystemAPI.Time.DeltaTime;
-                    float deltaTime = 0.01f;
+                    float deltaTime = 0.0027f;
                     ParticleComponent i = state.EntityManager.GetComponentData<ParticleComponent>(particle);
                     i.Velocity += deltaTime * i.Force / i.Mass;
                     LocalTransform localTransform = state.EntityManager.GetComponentData<LocalTransform>(particle);
 
                     float3 nextPos = localTransform.Position + deltaTime * i.Velocity;
-                    float gridX = (int)(nextPos.x / config.CellSize);
-                    float gridZ = (int)(nextPos.z / config.CellSize);
+                    float dampingFactor = 0.5f;
 
-                    if (gridX < 0 || gridZ < 0 || gridX >= maxX || gridZ >= maxX)
+                    if (nextPos.x < 0)
                     {
+                        nextPos.x = 0; 
+                        i.Velocity.x *= -dampingFactor; 
+                    }
+                    else if (nextPos.x >= config.NumRows * config.ParticleSeparation)
+                    {
+                        nextPos.x = config.NumRows * config.ParticleSeparation - float.Epsilon;
+                        i.Velocity.x *= -dampingFactor;
+                    }
 
-                    }
-                    else
+                    if (nextPos.z < 0)
                     {
-                        localTransform.Position = nextPos;
+                        nextPos.z = 0; 
+                        i.Velocity.z *= -dampingFactor;
                     }
-                    
+                    else if (nextPos.z >= config.NumCols * config.ParticleSeparation)
+                    {
+                        nextPos.z = config.NumCols * config.ParticleSeparation - float.Epsilon;
+                        i.Velocity.z *= -dampingFactor;
+                    }
+
+                    localTransform.Position = nextPos;
                     state.EntityManager.SetComponentData(particle, i);
                     state.EntityManager.SetComponentData(particle, localTransform);
 
                     OutsideAssertIf.NotNaN(localTransform.Position);
                 }
+
+                neighbors.Dispose();
             }
+        }
     }
 
     [BurstCompile]
@@ -161,7 +178,7 @@ public partial struct SPHSystem : ISystem
         else if (q < 2 && q >= 1)
             fq *= math.pow(2 - q, 3) / 6;
         else if (q < 1)
-            fq *= (float)2 / 3 - math.pow(q, 2) + 0.5f * math.pow(q, 2);
+            fq *= (float)2 / 3 - math.pow(q, 2) + 0.5f * math.pow(q, 3);
         return fq / math.pow(smoothingLength, 2);
     }
 

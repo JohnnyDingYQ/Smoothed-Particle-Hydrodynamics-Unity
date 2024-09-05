@@ -24,7 +24,7 @@ public partial struct Setup : ISystem
         CameraSingleton camera = SystemAPI.ManagedAPI.GetSingleton<CameraSingleton>();
 
         camera.camera.transform.SetPositionAndRotation(
-            new(config.ParticleSeparation * config.NumRows / 2, 30, config.ParticleSeparation * config.NumCols / 2),
+            new(config.ParticleSeparation * config.NumRows / 2, 15, config.ParticleSeparation * config.NumCols / 2),
             Quaternion.Euler(90, 0, 0)
         );
         var ecb = new EntityCommandBuffer(Allocator.Temp);
@@ -41,6 +41,7 @@ public partial struct Setup : ISystem
                 Scale = config.ParticleScale
             });
             float mass = math.pow(config.SmoothingLength, 3) * config.DesiredRestDensity;
+            // float mass = 40;
             ecb.AddComponent(particle, new ParticleComponent()
             {
                 Mass = mass,
