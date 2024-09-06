@@ -29,26 +29,25 @@ public partial struct SPHSystem : ISystem
         ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
         int maxX = (int)(config.NumRows * config.ParticleSeparation / config.CellSize) + 1;
         int maxZ = (int)(config.NumCols * config.ParticleSeparation / config.CellSize) + 1;
+        NativeList<JobHandle> allJobs = new(Allocator.Temp);
+        NativeHashMap<GridData, NativeArray<ParticleComponent>> particlesMap = new(maxX * maxZ, Allocator.Temp);
+        NativeHashMap<GridData, NativeArray<LocalTransform>> transformsMap = new(maxX * maxZ, Allocator.Temp);
 
         for (int x = 0; x < maxX; x++)
         {
             for (int z = 0; z < maxZ; z++)
             {
                 query.ResetFilter();
-                query.AddSharedComponentFilter(new GridData() { x = x, z = z });
+                GridData grid = new() { x = x, z = z };
+                query.AddSharedComponentFilter(grid);
 
-                NativeArray<Entity> particles = query.ToEntityArray(Allocator.TempJob);
                 NativeArray<ParticleComponent> particleComponents = query.ToComponentDataArray<ParticleComponent>(Allocator.TempJob);
                 NativeArray<ParticleComponent> updatedComponents = query.ToComponentDataArray<ParticleComponent>(Allocator.TempJob);
                 NativeArray<LocalTransform> particleTransforms = query.ToComponentDataArray<LocalTransform>(Allocator.TempJob);
 
-                NativeArray<float3> particlePositions = new(particles.Length, Allocator.TempJob);
-                for (int i = 0; i < particles.Length; i++)
-                    particlePositions[i] = particleTransforms[i].Position;
-
                 var densityJob = new CalculateDensityJob
                 {
-                    particlePositions = particlePositions,
+                    particleTransforms = particleTransforms,
                     particleComponents = particleComponents,
                     config = config,
                     updatedParticleComponents = updatedComponents
@@ -57,7 +56,7 @@ public partial struct SPHSystem : ISystem
 
                 var forcesJob = new CalculateForcesJob
                 {
-                    particlePositions = densityJob.particlePositions,
+                    particleTransforms = densityJob.particleTransforms,
                     particleComponents = densityJob.updatedParticleComponents,
                     config = config,
                     updatedParticleComponents = densityJob.particleComponents
@@ -72,23 +71,40 @@ public partial struct SPHSystem : ISystem
                     deltaTime = 0.0027f
                 };
                 JobHandle updateJobHandle = updateJob.Schedule(query.CalculateEntityCount(), forcesJobHandle);
-                densityJobHandle.Complete();
-                forcesJobHandle.Complete();
-                updateJobHandle.Complete();
 
-                for (int i = 0; i < particles.Length; i++)
-                {
-                    state.EntityManager.SetComponentData(particles[i], forcesJob.updatedParticleComponents[i]);
-                    state.EntityManager.SetComponentData(particles[i], particleTransforms[i]);
-                }
+                allJobs.Add(densityJobHandle);
+                allJobs.Add(forcesJobHandle);
+                allJobs.Add(updateJobHandle);
 
-                particles.Dispose();
-                particleComponents.Dispose();
-                particleTransforms.Dispose();
-                updatedComponents.Dispose();
-                particlePositions.Dispose();
+                particlesMap.Add(grid, particleComponents);
+                transformsMap.Add(grid, particleTransforms);
             }
         }
+        JobHandle.CompleteAll(allJobs.AsArray());
+        for (int x = 0; x < maxX; x++)
+        {
+            for (int z = 0; z < maxZ; z++)
+            {
+                query.ResetFilter();
+                GridData grid = new() { x = x, z = z };
+                query.AddSharedComponentFilter(grid);
+
+                NativeArray<ParticleComponent> particleComponents = particlesMap[grid];
+                NativeArray<LocalTransform> particleTransforms = transformsMap[grid];
+                NativeArray<Entity> entities = query.ToEntityArray(Allocator.Temp);
+
+                for (int index = 0; index < entities.Length; index++)
+                {
+                    state.EntityManager.SetComponentData(entities[index], particleComponents[index]);
+                    state.EntityManager.SetComponentData(entities[index], particleTransforms[index]);
+                }
+                particleComponents.Dispose();
+                particleTransforms.Dispose();
+            }
+        }
+        particlesMap.Dispose();
+        transformsMap.Dispose();
+
     }
 
     [BurstCompile]
@@ -101,7 +117,7 @@ public partial struct SPHSystem : ISystem
     [BurstCompile]
     public struct CalculateDensityJob : IJobFor
     {
-        [ReadOnly] public NativeArray<float3> particlePositions;
+        [ReadOnly] public NativeArray<LocalTransform> particleTransforms;
         [ReadOnly] public NativeArray<ParticleComponent> particleComponents;
         [ReadOnly] public ConfigSingleton config;
         public NativeArray<ParticleComponent> updatedParticleComponents;
@@ -111,11 +127,11 @@ public partial struct SPHSystem : ISystem
             ParticleComponent i = particleComponents[index];
             i.Density = 0;
 
-            float3 iPos = particlePositions[index];
+            float3 iPos = particleTransforms[index].Position;
 
             for (int otherIndex = 0; otherIndex < particleComponents.Length; otherIndex++)
             {
-                float3 jPos = particlePositions[otherIndex];
+                float3 jPos = particleTransforms[otherIndex].Position;
                 ParticleComponent j = particleComponents[otherIndex];
 
                 i.Density += j.Mass * Kernel(
@@ -148,15 +164,15 @@ public partial struct SPHSystem : ISystem
     [BurstCompile]
     public struct CalculateForcesJob : IJobFor
     {
-        [ReadOnly] public NativeArray<float3> particlePositions;
-        [ReadOnly] public NativeArray<ParticleComponent> particleComponents;
+        [ReadOnly] public NativeArray<LocalTransform> particleTransforms;
+        [DeallocateOnJobCompletion][ReadOnly] public NativeArray<ParticleComponent> particleComponents;
         [ReadOnly] public ConfigSingleton config;
         public NativeArray<ParticleComponent> updatedParticleComponents;
 
         public void Execute(int index)
         {
             ParticleComponent i = particleComponents[index];
-            float3 iPos = particlePositions[index];
+            float3 iPos = particleTransforms[index].Position;
             float3 sumPressure = 0;
             float3 sumViscosity = 0;
 
@@ -166,7 +182,7 @@ public partial struct SPHSystem : ISystem
                     continue;
 
                 ParticleComponent j = particleComponents[otherIndex];
-                float3 jPos = particlePositions[otherIndex];
+                float3 jPos = particleTransforms[otherIndex].Position;
 
                 sumPressure += j.Mass * (i.Pressure / math.pow(i.Density, 2) + j.Pressure / math.pow(j.Density, 2))
                                * KernelGradient(iPos, jPos, config.SmoothingLength);
