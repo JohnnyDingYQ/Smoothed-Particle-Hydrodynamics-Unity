@@ -26,7 +26,6 @@ public partial struct SPHSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // return;
         ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
         int maxX = (int)(config.NumRows * config.ParticleSeparation / config.CellSize) + 1;
         int maxZ = (int)(config.NumCols * config.ParticleSeparation / config.CellSize) + 1;
@@ -63,8 +62,7 @@ public partial struct SPHSystem : ISystem
                     config = config,
                     updatedParticleComponents = densityJob.particleComponents
                 };
-                densityJobHandle.Complete();
-                JobHandle forcesJobHandle = forcesJob.Schedule(query.CalculateEntityCount(), state.Dependency);
+                JobHandle forcesJobHandle = forcesJob.Schedule(query.CalculateEntityCount(), densityJobHandle);
 
                 var updateJob = new UpdatePositionJob
                 {
@@ -73,8 +71,9 @@ public partial struct SPHSystem : ISystem
                     config = config,
                     deltaTime = 0.0027f
                 };
+                JobHandle updateJobHandle = updateJob.Schedule(query.CalculateEntityCount(), forcesJobHandle);
+                densityJobHandle.Complete();
                 forcesJobHandle.Complete();
-                JobHandle updateJobHandle = updateJob.Schedule(query.CalculateEntityCount(), state.Dependency);
                 updateJobHandle.Complete();
 
                 for (int i = 0; i < particles.Length; i++)
@@ -98,40 +97,6 @@ public partial struct SPHSystem : ISystem
         // query.Dispose();
     }
 
-    [BurstCompile]
-    float Kernel(float3 i, float3 j, float smoothingLength)
-    {
-        float q = math.sqrt(math.pow(i.x - j.x, 2) + math.pow(i.z - j.z, 2)) / smoothingLength;
-        float fq = (float)3 / 2 / math.PI;
-        if (q >= 2)
-            fq = 0;
-        else if (q < 2 && q >= 1)
-            fq *= math.pow(2 - q, 3) / 6;
-        else if (q < 1)
-            fq *= (float)2 / 3 - math.pow(q, 2) + 0.5f * math.pow(q, 3);
-        return fq / math.pow(smoothingLength, 2);
-    }
-
-    [BurstCompile]
-    float3 KernelGradient(float3 i, float3 j, float smoothingLength)
-    {
-        float h = 0.1f;
-        float h2 = h * 2;
-        float3 gradient = new(0, 0, 0);
-        float3 mask = new(1, 0, 0);
-        gradient.x = (Kernel(i - h2 * mask, j, smoothingLength)
-            - 8 * Kernel(i - h * mask, j, smoothingLength)
-            + 8 * Kernel(i + h * mask, j, smoothingLength)
-            - Kernel(i + h2 * mask, j, smoothingLength))
-            / (h2 * 6); ;
-        mask = new(0, 0, 1);
-        gradient.z = (Kernel(i - h2 * mask, j, smoothingLength)
-            - 8 * Kernel(i - h * mask, j, smoothingLength)
-            + 8 * Kernel(i + h * mask, j, smoothingLength)
-            - Kernel(i + h2 * mask, j, smoothingLength))
-            / (h2 * 6);
-        return gradient;
-    }
 
     [BurstCompile]
     public struct CalculateDensityJob : IJobFor
@@ -192,8 +157,8 @@ public partial struct SPHSystem : ISystem
         {
             ParticleComponent i = particleComponents[index];
             float3 iPos = particlePositions[index];
-            float3 sumPressure = float3.zero;
-            float3 sumViscosity = float3.zero;
+            float3 sumPressure = 0;
+            float3 sumViscosity = 0;
 
             for (int otherIndex = 0; otherIndex < particleComponents.Length; otherIndex++)
             {
