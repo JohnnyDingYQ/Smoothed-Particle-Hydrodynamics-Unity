@@ -2,6 +2,7 @@ using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
@@ -11,6 +12,7 @@ using UnityEngine;
 [UpdateBefore(typeof(SPHSystem))]
 public partial struct GridCalculation : ISystem
 {
+    EntityCommandBuffer ecb;
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
@@ -21,21 +23,37 @@ public partial struct GridCalculation : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
 
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
-        foreach (var (transform, entity) in
-            SystemAPI.Query<RefRW<LocalTransform>>()
-            .WithAll<ParticleComponent>()
-            .WithEntityAccess())
+        ecb = new EntityCommandBuffer(Allocator.TempJob);
+        ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
+        GridJob gridJob = new() { ECB = ecb.AsParallelWriter(), config = config };
+        JobHandle jobHandle = gridJob.Schedule(state.Dependency);
+        jobHandle.Complete();
+        state.Dependency = jobHandle;
+
+        ecb.Playback(state.EntityManager);
+        ecb.Dispose();
+    }
+    [BurstCompile]
+    public void OnDestroy(ref SystemState state)
+    {
+        ecb.Dispose();
+    }
+
+    [BurstCompile]
+    public partial struct GridJob : IJobEntity
+    {
+        public EntityCommandBuffer.ParallelWriter ECB;
+        public ConfigSingleton config;
+
+        void Execute(Entity entity, ref ParticleComponent particleComponent, ref LocalTransform transform)
         {
-            var pos = transform.ValueRO.Position;
-            ecb.SetSharedComponent(entity, new GridData()
+            var pos = transform.Position;
+            ECB.SetSharedComponent(entity.Index, entity, new GridData()
             {
                 x = (int)(pos.x / config.CellSize),
                 z = (int)(pos.z / config.CellSize)
             });
         }
-        ecb.Playback(state.EntityManager);
     }
 }
