@@ -27,6 +27,11 @@ public partial struct Setup : ISystem
             new(config.ParticleSeparation * config.NumRows / 2, 15, config.ParticleSeparation * config.NumCols / 2),
             Quaternion.Euler(90, 0, 0)
         );
+
+        // do not spawn stationary if continuous spawning
+        if (config.ContinuousSpawning)
+            return;
+
         var ecb = new EntityCommandBuffer(Allocator.Temp);
 
         var particles = new NativeArray<Entity>(config.NumCols * config.NumRows, Allocator.Temp);
@@ -35,20 +40,7 @@ public partial struct Setup : ISystem
         int count = 0;
         foreach (var particle in particles)
         {
-            ecb.SetComponent(particle, new LocalTransform()
-            {
-                Position = config.ParticleSeparation * new float3(count % config.NumCols, 0, count / config.NumRows),
-                Scale = config.ParticleScale
-            });
-            float mass = math.pow(config.SmoothingLength, 3) * config.DesiredRestDensity;
-            // float mass = 40;
-            ecb.AddComponent(particle, new ParticleComponent()
-            {
-                Mass = mass,
-                Density = mass / math.pow(config.ParticleSeparation, 2),
-
-            });
-            ecb.AddSharedComponent(particle, new GridData());
+            ParticleInit.Create(particle, config, new float3(count % config.NumCols, 0, count / config.NumRows), ecb);
             count++;
         }
 

@@ -16,6 +16,9 @@ public class ConfigAuthoring : MonoBehaviour
     public float TimeStep;
     public float DampingFactor;
     public float CellSize;
+    public bool ContinuousSpawning;
+    public float SpawnInterval;
+    public float SpawnWidth;
 
     class Baker : Baker<ConfigAuthoring>
     {
@@ -36,7 +39,10 @@ public class ConfigAuthoring : MonoBehaviour
                 TimeStep = authoring.TimeStep,
                 CellSize = authoring.CellSize,
                 Stiffness = authoring.Stiffness,
-                DampingFactor = authoring.DampingFactor
+                DampingFactor = authoring.DampingFactor,
+                ContinuousSpawning = authoring.ContinuousSpawning,
+                SpawnInterval = authoring.SpawnInterval,
+                SpawnWidth = authoring.SpawnWidth
             });
         }
     }
@@ -57,4 +63,7 @@ public struct ConfigSingleton : IComponentData
     public float CellSize;
     public float Stiffness;
     public float DampingFactor;
+    public bool ContinuousSpawning;
+    public float SpawnInterval;
+    public float SpawnWidth;
 }

@@ -326,10 +326,13 @@ MonoBehaviour:
   DesiredRestDensity: 1000
   KinematicViscosity: 0.2
   Stiffness: 1000
-  Gravity: 100
+  Gravity: 50
   TimeStep: 0.0025
-  DampingFactor: 0.8
+  DampingFactor: 0.7
   CellSize: 0.6
+  ContinuousSpawning: 1
+  SpawnInterval: 0.1
+  SpawnWidth: 15
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
