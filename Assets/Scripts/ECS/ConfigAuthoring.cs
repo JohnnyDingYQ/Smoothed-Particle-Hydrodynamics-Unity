@@ -14,6 +14,7 @@ public class ConfigAuthoring : MonoBehaviour
     public float Stiffness;
     public float Gravity;
     public float TimeStep;
+    public float DampingFactor;
     public float CellSize;
 
     class Baker : Baker<ConfigAuthoring>
@@ -34,7 +35,8 @@ public class ConfigAuthoring : MonoBehaviour
                 Gravity = authoring.Gravity,
                 TimeStep = authoring.TimeStep,
                 CellSize = authoring.CellSize,
-                Stiffness = authoring.Stiffness
+                Stiffness = authoring.Stiffness,
+                DampingFactor = authoring.DampingFactor
             });
         }
     }
@@ -54,4 +56,5 @@ public struct ConfigSingleton : IComponentData
     public float TimeStep;
     public float CellSize;
     public float Stiffness;
+    public float DampingFactor;
 }

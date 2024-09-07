@@ -67,8 +67,7 @@ public partial struct SPHSystem : ISystem
                 {
                     particleComponents = forcesJob.updatedParticleComponents,
                     particleTransforms = particleTransforms,
-                    config = config,
-                    deltaTime = 0.0027f
+                    config = config
                 };
                 JobHandle updateJobHandle = updateJob.Schedule(query.CalculateEntityCount(), forcesJobHandle);
 
@@ -247,16 +246,16 @@ public partial struct SPHSystem : ISystem
         public NativeArray<ParticleComponent> particleComponents;
         public NativeArray<LocalTransform> particleTransforms;
         [ReadOnly] public ConfigSingleton config;
-        public float deltaTime;
 
         public void Execute(int index)
         {
+            float deltaTime = config.TimeStep;
             ParticleComponent i = particleComponents[index];
             i.Velocity += deltaTime * i.Force / i.Mass;
             LocalTransform transform = particleTransforms[index];
 
             float3 nextPos = transform.Position + deltaTime * i.Velocity;
-            float dampingFactor = 0.9f;
+            float dampingFactor = config.DampingFactor;
 
             if (nextPos.x < 0)
             {

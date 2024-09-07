@@ -267,7 +267,7 @@ Transform:
   m_GameObject: {fileID: 642122718}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 3.5, y: 15, z: 3.5}
+  m_LocalPosition: {x: 5, y: 15, z: 5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -324,10 +324,11 @@ MonoBehaviour:
   ParticleScale: 0.1
   SmoothingLength: 0.3
   DesiredRestDensity: 1000
-  KinematicViscosity: 0.02
-  Stiffness: 10000
+  KinematicViscosity: 0.2
+  Stiffness: 1000
   Gravity: 100
-  TimeStep: 0.05
+  TimeStep: 0.0025
+  DampingFactor: 0.8
   CellSize: 0.6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
