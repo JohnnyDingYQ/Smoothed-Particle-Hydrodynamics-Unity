@@ -1,3 +1,4 @@
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -8,14 +9,16 @@ using UnityEngine;
 [UpdateAfter(typeof(Setup))]
 public partial struct UiSystem : ISystem
 {
-    public static bool RespawnParticlesFlag;
     EntityQuery query;
     float timeElapsed;
+
+    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         query = new EntityQueryBuilder(Allocator.Persistent).WithAll<ParticleComponent, GridData, LocalTransform>().Build(ref state);
         state.RequireForUpdate<ConfigSingleton>();
         state.RequireForUpdate<CameraSingleton>();
+        state.RequireForUpdate<ActionFlags>();
     }
 
     public void OnUpdate(ref SystemState state)
@@ -27,14 +30,20 @@ public partial struct UiSystem : ISystem
             timeElapsed = 0;
             UI.SetSimsPerSecond((int)(1 / SystemAPI.Time.DeltaTime));
         }
-        if (RespawnParticlesFlag)
-        {
-            RespawnParticlesFlag = false;
-            var ecb = new EntityCommandBuffer(Allocator.Temp);
-            foreach (var (partial, entity) in SystemAPI.Query<ParticleComponent>().WithEntityAccess())
-                ecb.DestroyEntity(entity);
-            ecb.Playback(state.EntityManager);
-            Setup.SpawnParticles(SystemAPI.GetSingleton<ConfigSingleton>());
-        }
+        CheckResetParticle(ref state);
+    }
+
+    readonly void CheckResetParticle(ref SystemState state)
+    {
+        ActionFlags actionFlags = SystemAPI.GetSingleton<ActionFlags>();
+        if (!actionFlags.RespawnParticles)
+            return;
+        actionFlags.RespawnParticles = false;
+        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        foreach (var (partial, entity) in SystemAPI.Query<ParticleComponent>().WithEntityAccess())
+            ecb.DestroyEntity(entity);
+        ecb.Playback(state.EntityManager);
+        Setup.SpawnParticles(SystemAPI.GetSingleton<ConfigSingleton>());
+        SystemAPI.SetSingleton(actionFlags);
     }
 }

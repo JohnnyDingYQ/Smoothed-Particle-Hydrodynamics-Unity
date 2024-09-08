@@ -23,12 +23,15 @@ public partial struct Setup : ISystem
         state.Enabled = false;
 
         config = SystemAPI.GetSingleton<ConfigSingleton>();
-        CameraSingleton camera = SystemAPI.ManagedAPI.GetSingleton<CameraSingleton>();
 
+        CameraSingleton camera = SystemAPI.ManagedAPI.GetSingleton<CameraSingleton>();
         camera.camera.transform.SetPositionAndRotation(
             new(config.ParticleSeparation * config.NumRows / 2, 15, config.ParticleSeparation * config.NumCols / 2),
             Quaternion.Euler(90, 0, 0)
         );
+
+        Entity actionFlagEntity = state.EntityManager.CreateEntity();
+        state.EntityManager.AddComponentData(actionFlagEntity, new ActionFlags());
 
         // do not spawn stationary if continuous spawning
         if (config.ContinuousSpawning)
