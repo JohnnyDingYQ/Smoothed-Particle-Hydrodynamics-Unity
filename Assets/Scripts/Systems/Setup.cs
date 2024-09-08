@@ -9,6 +9,8 @@ using UnityEngine;
 [UpdateBefore(typeof(GridCalculation))]
 public partial struct Setup : ISystem
 {
+    ConfigSingleton config;
+
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
@@ -20,7 +22,7 @@ public partial struct Setup : ISystem
     {
         state.Enabled = false;
 
-        ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
+        config = SystemAPI.GetSingleton<ConfigSingleton>();
         CameraSingleton camera = SystemAPI.ManagedAPI.GetSingleton<CameraSingleton>();
 
         camera.camera.transform.SetPositionAndRotation(
@@ -32,6 +34,11 @@ public partial struct Setup : ISystem
         if (config.ContinuousSpawning)
             return;
 
+        SpawnParticles(config);
+    }
+
+    public static void SpawnParticles(ConfigSingleton config)
+    {
         var ecb = new EntityCommandBuffer(Allocator.Temp);
 
         var particles = new NativeArray<Entity>(config.NumCols * config.NumRows, Allocator.Temp);
@@ -46,6 +53,6 @@ public partial struct Setup : ISystem
 
         particles.Dispose();
 
-        ecb.Playback(state.EntityManager);
+        ecb.Playback(World.DefaultGameObjectInjectionWorld.EntityManager);
     }
 }

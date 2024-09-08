@@ -1,0 +1,4 @@
+.reset-button
+{
+    width: 150px;
+}

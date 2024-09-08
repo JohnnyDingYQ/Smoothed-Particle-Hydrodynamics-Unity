@@ -330,7 +330,7 @@ MonoBehaviour:
   TimeStep: 0.0025
   DampingFactor: 0.7
   CellSize: 0.6
-  ContinuousSpawning: 1
+  ContinuousSpawning: 0
   SpawnInterval: 0.1
   SpawnWidth: 15
 --- !u!1660057539 &9223372036854775807
