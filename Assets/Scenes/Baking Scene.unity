@@ -318,8 +318,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ParticlePrefab: {fileID: 8571357984829972552, guid: 4936f2e89cadc064cbeef12cf1cb74eb, type: 3}
-  NumRows: 50
-  NumCols: 50
+  NumRows: 70
+  NumCols: 70
   ParticleSeparation: 0.2
   ParticleScale: 0.1
   SmoothingLength: 0.3

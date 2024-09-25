@@ -30,8 +30,9 @@ public partial struct Setup : ISystem
             Quaternion.Euler(90, 0, 0)
         );
 
-        Entity actionFlagEntity = state.EntityManager.CreateEntity();
-        state.EntityManager.AddComponentData(actionFlagEntity, new ActionFlags());
+        Entity stateEntity = state.EntityManager.CreateEntity();
+        state.EntityManager.AddComponentData(stateEntity, new ActionFlags());
+        state.EntityManager.AddComponentData(stateEntity, new ClickData());
 
         // do not spawn stationary if continuous spawning
         if (config.ContinuousSpawning)

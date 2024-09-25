@@ -18,20 +18,21 @@ public partial struct ExternalForce : ISystem
         query = new EntityQueryBuilder(Allocator.Persistent).WithAll<ParticleComponent, GridData, LocalTransform>().Build(ref state);
         state.RequireForUpdate<ConfigSingleton>();
         state.RequireForUpdate<CameraSingleton>();
+        state.RequireForUpdate<ClickData>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        ActionFlags actionFlags = SystemAPI.GetSingleton<ActionFlags>();
-        if (!actionFlags.ApplyForce)
-            return;
-        actionFlags.ApplyForce = false;
-        SystemAPI.SetSingleton(actionFlags);
-
-        ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
-        GridData centerGrid = new() { x = (int)(config.NumCols * config.ParticleSeparation / config.CellSize / 2), z = 1 };
-        ApplyExternalForce(centerGrid, ref state);
+        ClickData clickData = SystemAPI.GetSingleton<ClickData>();
+        if (clickData.clicked)
+        {
+            ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
+            float3 pos = clickData.pos;
+            GridData centerGrid = new() { x = (int)(pos.x / config.CellSize), z = (int)(pos.z / config.CellSize) };
+            if (centerGrid.x > 0 && centerGrid.x < config.NumCols && centerGrid.z > 0 && centerGrid.z < config.NumRows )
+                ApplyExternalForce(centerGrid, ref state);
+        }
     }
 
     [BurstCompile]

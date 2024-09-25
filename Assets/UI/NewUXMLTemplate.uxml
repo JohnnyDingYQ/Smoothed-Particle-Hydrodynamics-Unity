@@ -4,6 +4,6 @@
         <ui:TextElement text="Particle Count:" name="particleCount" />
         <ui:TextElement text="Simulations Per Second:" name="simsPerSecond" />
         <ui:Button text="Reset Simulation" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetButton" class="reset-button" />
-        <ui:Button text="Test" parse-escape-sequences="true" display-tooltip-when-elided="true" name="testButton" class="reset-button" />
+        <ui:Button text="Test" parse-escape-sequences="true" display-tooltip-when-elided="true" name="testButton" class="test-button" />
     </ui:VisualElement>
 </ui:UXML>
