@@ -1,8 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=2ae5e30094e65fa418c387e620b051c0&amp;type=3#style" />
-    <ui:VisualElement style="flex-grow: 1;">
+    <ui:VisualElement style="flex-grow: 1;" class="root">
         <ui:TextElement text="Particle Count:" name="particleCount" />
         <ui:TextElement text="Simulations Per Second:" name="simsPerSecond" />
+        <ui:TextElement text="Click to apply external force" class="instruction" />
         <ui:Button text="Reset Simulation" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetButton" class="reset-button" />
         <ui:Button text="Test" parse-escape-sequences="true" display-tooltip-when-elided="true" name="testButton" class="test-button" />
     </ui:VisualElement>

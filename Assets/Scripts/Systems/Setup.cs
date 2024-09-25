@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.ConstrainedExecution;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -29,6 +30,7 @@ public partial struct Setup : ISystem
             new(config.ParticleSeparation * config.NumRows / 2, 15, config.ParticleSeparation * config.NumCols / 2),
             Quaternion.Euler(90, 0, 0)
         );
+        camera.camera.enabled = true;
 
         Entity stateEntity = state.EntityManager.CreateEntity();
         state.EntityManager.AddComponentData(stateEntity, new ActionFlags());
