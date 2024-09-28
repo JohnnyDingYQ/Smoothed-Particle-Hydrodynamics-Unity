@@ -10,7 +10,6 @@ public partial struct MouseInputSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<ConfigSingleton>();
-        state.RequireForUpdate<CameraSingleton>();
         state.RequireForUpdate<ClickData>();
     }
 
@@ -20,7 +19,7 @@ public partial struct MouseInputSystem : ISystem
         {
             float3 mousePosition = Input.mousePosition;
 
-            Ray ray = SystemAPI.ManagedAPI.GetSingleton<CameraSingleton>().camera.ScreenPointToRay(mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(mousePosition);
             SystemAPI.SetSingleton(new ClickData() { clicked = true, pos = ray.origin + ray.direction * (-ray.origin.y) / ray.direction.y });
         }
         else

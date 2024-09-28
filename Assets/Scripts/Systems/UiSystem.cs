@@ -17,7 +17,6 @@ public partial struct UiSystem : ISystem
     {
         query = new EntityQueryBuilder(Allocator.Persistent).WithAll<ParticleComponent, GridData, LocalTransform>().Build(ref state);
         state.RequireForUpdate<ConfigSingleton>();
-        state.RequireForUpdate<CameraSingleton>();
         state.RequireForUpdate<ActionFlags>();
     }
 

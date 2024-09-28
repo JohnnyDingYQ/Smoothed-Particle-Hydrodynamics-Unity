@@ -15,7 +15,6 @@ public partial struct SPHSystem : ISystem
     {
         query = new EntityQueryBuilder(Allocator.Persistent).WithAll<ParticleComponent, GridData, LocalTransform>().Build(ref state);
         state.RequireForUpdate<ConfigSingleton>();
-        state.RequireForUpdate<CameraSingleton>();
     }
 
     [BurstCompile]

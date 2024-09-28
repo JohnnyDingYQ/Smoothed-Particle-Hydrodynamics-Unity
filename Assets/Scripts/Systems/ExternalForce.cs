@@ -17,7 +17,6 @@ public partial struct ExternalForce : ISystem
     {
         query = new EntityQueryBuilder(Allocator.Persistent).WithAll<ParticleComponent, GridData, LocalTransform>().Build(ref state);
         state.RequireForUpdate<ConfigSingleton>();
-        state.RequireForUpdate<CameraSingleton>();
         state.RequireForUpdate<ClickData>();
     }
 
@@ -30,8 +29,7 @@ public partial struct ExternalForce : ISystem
             ConfigSingleton config = SystemAPI.GetSingleton<ConfigSingleton>();
             float3 pos = clickData.pos;
             GridData centerGrid = new() { x = (int)(pos.x / config.CellSize), z = (int)(pos.z / config.CellSize) };
-            if (centerGrid.x > 0 && centerGrid.x < config.NumCols && centerGrid.z > 0 && centerGrid.z < config.NumRows )
-                ApplyExternalForce(centerGrid, ref state);
+            ApplyExternalForce(centerGrid, ref state);
         }
     }
 
@@ -46,6 +44,8 @@ public partial struct ExternalForce : ISystem
         for (int x = centerGrid.x - 1; x <= centerGrid.x + 1; x++)
             for (int z = centerGrid.z - 1; z <= centerGrid.z + 1; z++)
             {
+                if (x < 0 && x > config.NumCols && z < 0 && z > config.NumRows)
+                    continue;
                 query.ResetFilter();
                 query.AddSharedComponentFilter(new GridData() { x = x, z = z });
                 NativeArray<Entity> entities = query.ToEntityArray(Allocator.Temp);
@@ -55,7 +55,7 @@ public partial struct ExternalForce : ISystem
                     ParticleComponent particleComponent = state.EntityManager.GetComponentData<ParticleComponent>(entity);
 
                     float distance = math.distance(localTransform.Position, center);
-                    particleComponent.Velocity += 20 * (localTransform.Position - center) / (1 + math.pow(distance, 2));
+                    particleComponent.Velocity += 35 * (localTransform.Position - center) / (1 + math.pow(distance, 2));
 
                     state.EntityManager.SetComponentData(entity, particleComponent);
                 }

@@ -17,7 +17,6 @@ public partial struct GridCalculation : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<ConfigSingleton>();
-        state.RequireForUpdate<CameraSingleton>();
     }
 
     [BurstCompile]

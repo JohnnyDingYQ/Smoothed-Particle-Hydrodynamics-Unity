@@ -16,7 +16,7 @@ public partial struct Setup : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<ConfigSingleton>();
-        state.RequireForUpdate<CameraSingleton>();
+        // state.RequireForUpdate<CameraSingleton>();
     }
 
     public void OnUpdate(ref SystemState state)
@@ -24,14 +24,6 @@ public partial struct Setup : ISystem
         state.Enabled = false;
 
         config = SystemAPI.GetSingleton<ConfigSingleton>();
-
-        CameraSingleton camera = SystemAPI.ManagedAPI.GetSingleton<CameraSingleton>();
-        camera.camera.transform.SetPositionAndRotation(
-            new(config.ParticleSeparation * config.NumRows / 2, 15, config.ParticleSeparation * config.NumCols / 2),
-            Quaternion.Euler(90, 0, 0)
-        );
-        camera.camera.enabled = true;
-
         Entity stateEntity = state.EntityManager.CreateEntity();
         state.EntityManager.AddComponentData(stateEntity, new ActionFlags());
         state.EntityManager.AddComponentData(stateEntity, new ClickData());

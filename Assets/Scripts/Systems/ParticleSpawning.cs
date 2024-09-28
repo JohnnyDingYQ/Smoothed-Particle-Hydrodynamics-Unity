@@ -17,7 +17,6 @@ public partial struct ParticleSpawning : ISystem
     {
 
         state.RequireForUpdate<ConfigSingleton>();
-        state.RequireForUpdate<CameraSingleton>();
 
     }
 
