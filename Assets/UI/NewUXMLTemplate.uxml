@@ -1,8 +1,20 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=2ae5e30094e65fa418c387e620b051c0&amp;type=3#style" />
     <ui:VisualElement style="flex-grow: 1;" class="root">
-        <ui:TextElement text="Particle Count:" name="particleCount" />
-        <ui:TextElement text="Simulations Per Second:" name="simsPerSecond" />
+        <ui:VisualElement name="links" class="links" style="flex-direction: row; align-items: center;">
+            <ui:Image class="github-link" style="--unity-image: url('github-mark-white.png');" />
+            <ui:Label text="Github Repo" class="git-link-label" />
+        </ui:VisualElement>
+        <ui:VisualElement style="flex-direction: row; align-items: center;">
+            <ui:TextElement text="Particle Count:" class="attribute-name" />
+            <ui:TextElement text="" name="particleCount" class="attribute-value"/>
+        </ui:VisualElement>
+        <ui:VisualElement style="flex-direction: row; align-items: center;">
+            <ui:TextElement text="Simulations Per Second:" class="attribute-name"  />
+            <ui:TextElement text="" name="simsPerSecond" class="attribute-value" />
+        </ui:VisualElement>
+        
         <ui:TextElement text="Click to apply external force" class="instruction" />
         <ui:Button text="Reset Simulation" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetButton" class="reset-button" />
         <ui:Button text="Test" parse-escape-sequences="true" display-tooltip-when-elided="true" name="testButton" class="test-button" />

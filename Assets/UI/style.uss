@@ -1,19 +1,44 @@
-.root TextElement
+.reset-button {
+    width: 150px;
+}
+
+.test-button {
+    display: none;
+}
+
+.instruction {
+    font-size: 20px;
+    color:#8fbc8f;
+}
+
+.links {
+    cursor: arrow;
+}
+
+.links:hover {
+    cursor: pointer;
+}
+
+.github-link {
+    width: 30px;
+    height: 30px;
+}
+
+.git-link-label {
+    margin-left: 10px;
+    color: #fff;
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.attribute-name
+{
+    -unity-font-style: bold;
+    color: #8a2be2;
+}
+
+.attribute-value
 {
     color: #fff;
 }
 
-.reset-button
-{
-    width: 150px;
-}
-
-.test-button
-{
-    display: none;
-}
-
-.instruction
-{
-    font-size: 14px;
-}
